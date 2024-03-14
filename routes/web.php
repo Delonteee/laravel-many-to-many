@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\MainController as AdminMainController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\Admin\TypeController as AdminTypeController;
 
+use App\Http\Controllers\Admin\TechnologyController as AdminTechnologyController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -33,5 +35,9 @@ Route::prefix('admin')
 
 
 Route::resource('types', AdminTypeController::class);
+
+
+Route::resource('technologies', AdminTechnologyController::class);
+
 
 require __DIR__.'/auth.php';
