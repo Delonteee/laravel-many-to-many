@@ -8,14 +8,15 @@ use Illuminate\Http\Request;
 //Models
 use App\Models\Project;
 use App\Models\Type;
+use App\Models\Technology;
 
 // Helpers
 use Illuminate\Support\Str;
 
-
 // Form Requests
-use App\Http\Requests\StoreProjectRequest;
-use App\Http\Requests\UpdateProjectRequest;
+use App\Http\Requests\Auth\Project\StoreProjectRequest;
+use App\Http\Requests\Auth\Project\UpdateProjectRequest;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
@@ -24,9 +25,10 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        $types = Type::all();
+        $projects = Project::all();
+        $technologies = Project::all();
 
-        return view('admin.projects.create', compact('types'));
+        return view('admin.projects.index', compact('projects','technologies'));
     }
 
     /**
@@ -34,7 +36,10 @@ class ProjectController extends Controller
      */
     public function create()
     {
-        return view('admin.projects.create');
+        $types = Type::all();
+        $technologies = Technology::all();
+
+        return view('admin.projects.create', compact('types','technologies'));
     }
 
     /**
@@ -42,13 +47,36 @@ class ProjectController extends Controller
      */
     public function store(StoreProjectRequest $request)
     {
-        $validatedData = $request->validated();
 
-        $project = Project::create($validatedData);
+        $projectData = $request->validated();
 
-        return redirect()->route('admin.projects.show', ['project' => $project->id]);
+        $coverImgPath = null;
+        if (isset($projectData['cover_img'])) {
+            $coverImgPath = Storage::disk('public')->put('img',$projectData['cover_img']);
+        };
+
+        $slug = Str::slug($projectData['title']);
+
+        $project = Project::create([
+            'title' => $projectData['title'],
+            'slug' => $slug,
+            'description' => $projectData['description'],
+            'url' => $projectData['url'],
+            'type_id' => $projectData['type_id'],
+            'cover_img' => $coverImgPath,
+        ]);
+
+        $type = $projectData['type_id'];
+
+        if (isset($projectData['technologies'])) {
+            foreach ($projectData['technologies'] as $singleTechnologyId) {
+                
+                $project->technologies()->attach($singleTechnologyId);
+            }
+        }
+
+        return redirect()->route('admin.projects.show', compact('project'));
     }
-
     /**
      * Display the specified resource.
      */
@@ -62,7 +90,10 @@ class ProjectController extends Controller
      */
     public function edit(Project $project)
     {
-        return view('admin.projects.edit', compact('project'));
+        $types = Type::all();
+        $technologies = Technology::all();
+
+        return view('admin.projects.edit', compact('project', 'types','technologies'));
     }
 
     /**
@@ -70,11 +101,44 @@ class ProjectController extends Controller
      */
     public function update(UpdateProjectRequest $request, Project $project)
     {
-        $validatedData = $request->validated();
+        $projectData = $request->validated();
 
-        $project->update($validatedData);
+        $coverImgPath = $project->cover_img;
 
-        return redirect()->route('admin.projects.show', ['project' => $project->id]);
+        if (isset($projectData['cover_img'])) {
+            //Per sostituire l'immagine
+            if($project->cover_img != null) {
+                //Elimina l'immagine precedente
+                Storage::disk('public')->delete($project->cover_img);
+            }
+            //Assegna la nuova immagine
+            $coverImgPath = Storage::disk('public')->put('img',$projectData['cover_img']);
+        }
+        //Oppure elimina l'immagine precedente
+        elseif (isset($projectData['delete_cover_img'])) {
+            Storage::disk('public')->delete($project->cover_img);
+            $coverImgPath = null;
+        }
+
+        $slug = Str::slug($projectData['title']);
+
+        $project->update([
+            'title' => $projectData['title'],
+            'slug' => $slug,
+            'description' => $projectData['description'],
+            'url' => $projectData['url'],
+            'type_id' => $projectData['type_id'],
+            'cover_img' => $coverImgPath,
+        ]);
+
+        if (isset($projectData['technologies'])) {
+            $project->technologies()->sync($projectData['technologies']);
+        }
+        else {
+            $project->technologies()->detach();
+        }
+
+        return redirect()->route('admin.projects.show', compact('project'));
     }
 
     /**
@@ -82,6 +146,12 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
+        //Eliminiamo l'immagine dallo storage prima che venga eliminato il post
+        if($project->cover_img != null) {
+            //Elimina l'immagine precedente
+            Storage::disk('public')->delete($project->cover_img);
+        }
+
         $project->delete();
 
         return redirect()->route('admin.projects.index');

@@ -25,6 +25,9 @@ class UpdateProjectRequest extends FormRequest
             'title'             => 'required|max:128',
             'description'       => 'required|max:1024',
             'url'               => 'required|url',
+            'technologies'      => 'nullable|array|exists:technologies,id',
+            'cover_img'         => 'nullable|image',
+            'delete_cover_img'  => 'nullable|boolean',
         ];
     }
 }

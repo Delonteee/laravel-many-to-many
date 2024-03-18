@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>@yield('page-title') | {{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'Project') }}</title>
 
         <!-- Scripts -->
         @vite('resources/js/app.js')
@@ -14,7 +14,7 @@
         <header>
             <nav class="navbar navbar-expand-lg bg-body-tertiary">
                 <div class="container">
-                    <a class="navbar-brand" href="/">Template</a>
+                    <a class="navbar-brand" href="/">Welcome</a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
@@ -25,7 +25,7 @@
                                     <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="#">Link 2</a>
+                                    <a class="nav-link" href="{{ route('admin.projects.index') }}">Index</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="#">Link 3</a>
@@ -36,6 +36,9 @@
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="{{ route('register') }}">Register</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('projects.index') }}">Projects</a>
                                 </li>
                             @endauth
                         </ul>
